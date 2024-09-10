@@ -6,6 +6,10 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { USER_API_END_POINT } from "@/utils/constant";
 import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
+import { setLoading } from "@/redux/authSlice";
+import { Loader2 } from "lucide-react";
+import { Button } from "../ui/button";
 
 function Login() {
   const [input, setInput] = useState({
@@ -13,7 +17,9 @@ function Login() {
     password: "",
     isRemember: false,
   });
+  const {loading, user} = useSelector(store => store.auth);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
@@ -63,6 +69,7 @@ function Login() {
     validateForm();
     if (isFormValid) {
       try {
+        dispatch(setLoading(true));
         const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
           header: {
             "Content-Type": "application/json"
@@ -78,10 +85,8 @@ function Login() {
         toast.error(error.response.data.message);
       }
       finally {
-
+        dispatch(setLoading(false));
       }
-    } else {
-      console.log("Something is wrong", errors);
     }
   }
 
@@ -145,18 +150,10 @@ function Login() {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className={`w-full py-2 rounded-md text-white ${
-              isFormValid
-                ? "bg-gradient-to-r from-blue-900 via-blue-700 to-blue-300"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-            disabled={!isFormValid}
-          >
-            Submit
-          </button>
-
+          {
+                        loading ? <Button type="submit" className="w-full py-2 rounded-md text-white g-gradient-to-r from-blue-900 via-blue-700 to-blue-300"> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Please wait </Button> : <Button type="submit" className={`w-full py-2 rounded-md text-white ${ isFormValid ? "bg-gradient-to-r from-blue-900 via-blue-700 to-blue-300" : "bg-gray-400 cursor-not-allowed" }`} disabled={!isFormValid} > Login</Button>
+          }
+          
           {/* Signup Link */}
           <p className="mt-4 text-center">
             Create a new account?{" "}

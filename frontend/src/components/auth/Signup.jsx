@@ -6,8 +6,11 @@ import { Avatar, AvatarImage } from "../ui/avatar";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import defaultProfilePic from "../../assets/124599.jpeg";
 import axios from "axios";
-import { toast } from "sonner";
 import { USER_API_END_POINT } from '@/utils/constant'
+import { useSelector, useDispatch } from "react-redux";
+import { Button } from "../ui/button";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Signup() {
   const [input, setInput] = useState({
@@ -20,6 +23,8 @@ function Signup() {
     termAccepted: false,
     profilePic: null,
   });
+  const {loading,user} = useSelector(store=>store.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
@@ -156,14 +161,44 @@ function Signup() {
         
         if (res.data.success) { 
           navigate("/login");
-          toast.success(res.data.message); // Trigger toast on success
+          toast.success(res.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+            transition: Bounce,
+            });
         } 
         else {
-          toast.error("Something went wrong"); // Default error handling
+          toast.error('Something went wrong', {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+            transition: Bounce,
+            });
         }
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.message || "An error occurred"); // Trigger toast on error
+        toast.error(error.response.data.message || "An error occurred", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+          transition: Bounce,
+          });
       }
     } else {
       console.log("Form has errors", errors);
@@ -352,17 +387,9 @@ function Signup() {
           {errors.general && <p className="text-red-500">{errors.general}</p>}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className={`w-full py-2 rounded-md text-white ${
-              isFormValid
-                ? "bg-gradient-to-r from-blue-900 via-blue-700 to-blue-300"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-            disabled={!isFormValid}
-          >
-            Submit
-          </button>
+          {
+                        loading ? <Button type="submit" className="w-full py-2 rounded-md text-white g-gradient-to-r from-blue-900 via-blue-700 to-blue-300"> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Please wait </Button> : <Button type="submit" className={`w-full py-2 rounded-md text-white ${ isFormValid ? "bg-gradient-to-r from-blue-900 via-blue-700 to-blue-300" : "bg-gray-400 cursor-not-allowed" }`} disabled={!isFormValid} > SignUp</Button>
+          }
 
           {/* Login Link */}
           <p className="mt-4 text-center">
