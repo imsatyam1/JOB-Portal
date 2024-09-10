@@ -3,19 +3,24 @@ import Navbar from "../shared/Navbar";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage } from "../ui/avatar";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import defaultProfilePic from "../../assets/124599.jpeg";
+import axios from "axios";
+import { toast } from "sonner";
+import { USER_API_END_POINT } from '@/utils/constant'
 
 function Signup() {
-  const [formData, setFormData] = useState({
-    fullName: "",
+  const [input, setInput] = useState({
+    fullname: "",
     email: "",
+    phoneNumber: "",
     password: "",
     workstatus: "",
     resume: null,
     termAccepted: false,
     profilePic: null,
   });
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
@@ -25,42 +30,52 @@ function Signup() {
 
   useEffect(() => {
     validateForm();
-  }, [formData]);
+  }, [input]);
 
   const validateForm = () => {
     let tempErrors = {};
 
-    const isEmpty = Object.values(formData).some(
+    const isEmpty = Object.values(input).some(
       (value) => value === "" || value === null || value === false
     );
 
+    // email validation
     if (!isEmpty) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-      if (!emailRegex.test(formData.email)) {
+      if (!emailRegex.test(input.email)) {
         tempErrors.email = "Invalid email format";
       }
-
-      const passwordRegex =
-        /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
-      if (!passwordRegex.test(formData.password)) {
-        tempErrors.password =
-          "Password must have at least 1 letter, 1 digit, 1 special character, and be >6 characters";
+      
+      // phone validation
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(input.phoneNumber)) {
+        tempErrors.phoneNumber = "Phone number must be 10 digits";
       }
 
-      if (formData.resume) {
+      // password validation
+      const passwordRegex =
+        /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
+      if (!passwordRegex.test(input.password)) {
+        tempErrors.password =
+          "password must have at least 1 letter, 1 digit, 1 special character, and be >6 characters";
+      }
+
+      // resume validation
+      if (input.resume) {
         if (
           ![
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          ].includes(formData.resume.type)
+          ].includes(input.resume.type)
         ) {
           tempErrors.resume = "Invalid file type. Only .pdf or .docx allowed";
-        } else if (formData.resume.size > maxSize) {
+        } else if (input.resume.size > maxSize) {
           tempErrors.resume = "File size exceeds 2MB";
         }
       }
 
-      if (!formData.termAccepted) {
+      // terms validation
+      if (!input.termAccepted) {
         tempErrors.termAccepted = "You must accept terms and conditions";
       }
     } else {
@@ -73,8 +88,8 @@ function Signup() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setInput({
+      ...input,
       [name]: type === "checkbox" ? checked : value,
     });
   };
@@ -105,7 +120,7 @@ function Signup() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, profilePic: reader.result });
+        setInput({ ...input, profilePic: reader.result });
       };
       reader.readAsDataURL(file);
     }
@@ -114,19 +129,47 @@ function Signup() {
   const handleResumeChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, resume: file });
+      setInput({ ...input, resume: file });
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault(); 
     validateForm();
+    
     if (isFormValid) {
-      console.log("Form Submitted", formData);
+      const formData = new FormData();
+      formData.append("fullname", input.fullname);
+      formData.append("email", input.email);
+      formData.append("phoneNumber", input.phoneNumber);
+      formData.append("password", input.password);
+      formData.append("workstatus", input.workstatus);
+      formData.append("profilePhoto", input.profilePic);
+      formData.append("resume", input.resume);
+      
+      try {
+        const res = await axios.post(`${USER_API_END_POINT}/register`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true 
+        });
+        
+        
+        if (res.data.success) { 
+          navigate("/login");
+          toast.success(res.data.message); // Trigger toast on success
+        } 
+        else {
+          toast.error("Something went wrong"); // Default error handling
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message || "An error occurred"); // Trigger toast on error
+      }
     } else {
       console.log("Form has errors", errors);
-    }
-  };
+      toast.error("Please correct the errors before submitting the form"); // Display toast for form errors
+    } 
+  };  
 
   return (
     <div>
@@ -145,7 +188,7 @@ function Signup() {
           <div className="mb-3 flex items-center justify-center">
             <Avatar className="h-16 w-16 lg:h-20 lg:w-20 cursor-pointer">
               <AvatarImage
-                src={formData.profilePic || defaultProfilePic}
+                src={input.profilePic || defaultProfilePic}
                 alt="Profile"
                 style={{
                   borderRadius: "50%",
@@ -165,6 +208,7 @@ function Signup() {
 
             <input
               type="file"
+              name="profilePic"
               accept=".png, .jpg, .jpeg"
               className="hidden"
               ref={fileInputRef}
@@ -181,42 +225,57 @@ function Signup() {
             <label className="block mb-2 font-bold">Full Name</label>
             <input
               type="text"
-              name="fullName"
+              name="fullname"
               placeholder="What is your name?"
               className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              value={formData.fullName}
+              value={input.fullname}
               onChange={handleChange}
               required
             />
-            {errors.fullName && (
-              <p className="text-red-500">{errors.fullName}</p>
+            {errors.fullname && (
+              <p className="text-red-500">{errors.fullname}</p>
             )}
           </div>
 
-          {/* Email Input */}
+          {/* email Input */}
           <div className="mb-2">
-            <label className="block mb-2 font-bold">Email</label>
+            <label className="block mb-2 font-bold">email</label>
             <input
               type="email"
               name="email"
-              placeholder="Tell us your Email ID"
+              placeholder="Tell us your email ID"
               className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              value={formData.email}
+              value={input.email}
               onChange={handleChange}
               required
             />
             {errors.email && <p className="text-red-500">{errors.email}</p>}
           </div>
 
-          {/* Password Input */}
+          {/* phone Input */}
           <div className="mb-2">
-            <label className="block mb-2 font-bold">Password</label>
+            <label className="block mb-2 font-bold">Phone Number</label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="Enter your phone number"
+              className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              value={input.phoneNumber}
+              onChange={handleChange}
+              required
+            />
+            {errors.phoneNumber && <p className="text-red-500">{errors.phoneNumber}</p>}
+          </div>
+
+          {/* password Input */}
+          <div className="mb-2">
+            <label className="block mb-2 font-bold">password</label>
             <input
               type="password"
               name="password"
               placeholder="Minimum 6 characters"
               className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              value={formData.password}
+              value={input.password}
               onChange={handleChange}
               required
             />
@@ -228,18 +287,18 @@ function Signup() {
           {/* Work Status Radio Input */}
           <div className="mb-2">
             <label className="block mb-2 font-bold">Work Status</label>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center justify-around space-x-6">
               <div>
                 <input
                   type="radio"
                   name="workstatus"
                   id="employee"
                   value="employee"
-                  checked={formData.workstatus === "employee"}
+                  checked={input.workstatus === "employee"}
                   onChange={handleChange}
                   className="mr-2"
                 />
-                <label htmlFor="employee">I'm Searching Job</label>
+                <label htmlFor="employee">Find Job</label>
               </div>
               <div>
                 <input
@@ -247,11 +306,11 @@ function Signup() {
                   name="workstatus"
                   id="recruiter"
                   value="recruiter"
-                  checked={formData.workstatus === "recruiter"}
+                  checked={input.workstatus === "recruiter"}
                   onChange={handleChange}
                   className="mr-2"
                 />
-                <label htmlFor="recruiter">I'm Recruiter</label>
+                <label htmlFor="recruiter">Recruiter</label>
               </div>
             </div>
           </div>
@@ -276,9 +335,9 @@ function Signup() {
             <Checkbox
               id="terms"
               name="termAccepted"
-              checked={formData.termAccepted}
+              checked={input.termAccepted}
               onCheckedChange={(checked) =>
-                setFormData({ ...formData, termAccepted: checked })
+                setInput({ ...input, termAccepted: checked })
               }
             />
             <Label htmlFor="terms" className="ml-2">

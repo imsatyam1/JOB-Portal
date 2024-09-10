@@ -2,43 +2,48 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../shared/Navbar";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { USER_API_END_POINT } from "@/utils/constant";
+import { toast } from "sonner";
 
 function Login() {
-  const [formData, setFormData] = useState({
-    email: "",
+  const [input, setInput] = useState({
+    id: "",
     password: "",
     isRemember: false,
   });
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     validateForm();
-  }, [formData]);
+  }, [input]);
 
   const validateForm = () => {
     let tempErrors = {};
 
-    const isEmpty = Object.values(formData).some(
+    const isEmpty = Object.values(input).some(
       (value) => value === "" || value === null
     );
 
     if (!isEmpty) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-      if (!emailRegex.test(formData.email)) {
-        tempErrors.email = "Invalid email format";
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!emailRegex.test(input.id) && !phoneRegex.test(input.id)) {
+        tempErrors.id = "Wrong Input!";
       }
 
       const passwordRegex =
         /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{7,}$/;
-      if (!passwordRegex.test(formData.password)) {
+      if (!passwordRegex.test(input.password)) {
         tempErrors.password =
           "Password must have at least 1 letter, 1 digit, 1 special character, and be >6 characters";
       }
     } else {
-      tempErrors.general = "Please fill all the fields";
+      tempErrors.general = "Something is wrong!!";
     }
 
     setErrors(tempErrors);
@@ -47,21 +52,38 @@ function Login() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setInput({
+      ...input,
       [name]: type === "checkbox" ? checked : value,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     validateForm();
     if (isFormValid) {
-      console.log("You are LoggedIn");
+      try {
+        const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
+          header: {
+            "Content-Type": "application/json"
+          },
+          withCredentials: true,
+        });
+        console.log(res.data.message);
+        if (res.data.success) {
+          navigate("/");
+          toast(res.data.message);
+        }
+      } catch (error) {
+        toast.error(error.response.data.message);
+      }
+      finally {
+
+      }
     } else {
       console.log("Something is wrong", errors);
     }
-  };
+  }
 
   return (
     <div>
@@ -78,15 +100,14 @@ function Login() {
 
           {/* Email Input */}
           <div className="mb-2">
-            <label className="block mb-2 font-bold">Email</label>
+            <label className="block mb-2 font-bold">Email/Phone Number</label>
             <input
-              type="email"
-              name="email"
+              type="text"
+              name="id"
               placeholder="Tell us your Email ID"
               className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              value={formData.email}
+              value={input.id}
               onChange={handleChange}
-              required
             />
             {errors.email && <p className="text-red-500">{errors.email}</p>}
           </div>
@@ -99,7 +120,7 @@ function Login() {
               name="password"
               placeholder="Minimum 6 characters"
               className="w-full p-2 mb-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              value={formData.password}
+              value={input.password}
               onChange={handleChange}
               required
             />
@@ -113,9 +134,9 @@ function Login() {
             <Checkbox
               id="isRemember"
               name="isRemember"
-              checked={formData.isRemember}
+              checked={input.isRemember}
               onCheckedChange={(checked) =>
-                setFormData({ ...formData, isRemember: checked })
+                setInput({ ...input, isRemember: checked })
               }
             />
             <Label htmlFor="isRemember" className="ml-2">

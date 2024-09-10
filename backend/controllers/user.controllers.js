@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 export const register = async(req, res) => {
     try
     {
-        const {fullname, email, phoneNumber, password, role} = req.body;
-        if(!fullname || !email || !phoneNumber || !password || !role){
+        const {fullname, email, phoneNumber, password, workstatus} = req.body;
+        if(!fullname || !email || !phoneNumber || !password || !workstatus){
             return res.status(400).json({
                 message: "Something is missing",
                 success: false
@@ -22,13 +22,14 @@ export const register = async(req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log("Password hashed :", hashedPassword)
+        console.log(fullname,email,phoneNumber, password, workstatus)
 
         const newUser = await User.create({
             fullname,
             email,
             phoneNumber,
             password:hashedPassword,
-            role,
+            workstatus,
             // profile:{
             //     profilePhoto: cloudResponse.secure_url,
             // }
@@ -51,64 +52,86 @@ export const register = async(req, res) => {
 }
 
 export const login = async (req, res) => {
-    try{
-        const{ email, password, role } = req.body;
+    try {
+        const { id, password } = req.body;
 
-        if(!email || !password || !role){
+        // Check if id or password is missing
+        if (!id || !password) {
             return res.status(400).json({
-                message: "Something is missing",
+                message: "Email/Phone and password are required",
                 success: false
             });
-        };
+        }
 
-        let user = await User.findOne({ email });
-        if(!user){
+        let user;
+
+        // Check if the provided id is an email or phone number
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        const phoneRegex = /^[0-9]{10}$/;
+
+        if (emailRegex.test(id)) {
+            // If id is an email
+            user = await User.findOne({ email: id });
+        } else if (phoneRegex.test(id)) {
+            // If id is a phone number
+            user = await User.findOne({ phoneNumber: id });
+        } else {
             return res.status(400).json({
-                message:"Incorrect email or password",
+                message: "Please provide a valid email or phone number",
+                success: false
+            });
+        }
+
+        // If no user is found
+        if (!user) {
+            return res.status(400).json({
+                message: "Incorrect email/phone number or password",
                 success: false,
             });
         }
 
+        // Check if the password matches
         const isPasswordMatch = await bcrypt.compare(password, user.password);
-        if(!isPasswordMatch) {
+        if (!isPasswordMatch) {
             return res.status(400).json({
-                message: "Incorrect email or password",
+                message: "Incorrect email/phone number or password",
                 success: false
-            })
-        };
+            });
+        }
 
-        if(role !== user.role){
-            return res.status(400).json({
-                message: "Account doesn't exist with current role",
-                success: false
-            })
-        };
+        // Create JWT token
         const tokenData = {
             userId: user._id
-        }
- 
-        const token = await jwt.sign(tokenData, process.env.SECRET_KEY, {expiresIn: '1d'});
+        };
 
+        const token = await jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' });
+
+        // Return user data and token in response, set httpOnly cookie
         user = {
             _id: user._id,
             fullname: user.fullname,
             email: user.email,
-            phoneNumber:user.phoneNumber,
-            role: user.role,
+            phoneNumber: user.phoneNumber,
+            workstatus: user.workstatus,
             profile: user.profile
-        }
+        };
 
-        return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'strict'}).json({
-            message: `Welcome back ${user.fullname}`,
-            user,
-            success: true
-        })
+        return res.status(200)
+            .cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'strict' })
+            .json({
+                message: `Welcome back ${user.fullname}`,
+                user,
+                success: true
+            });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Server error, please try again later",
+            success: false
+        });
     }
-    catch(error){
-        console.log(error);
-        
-    }
-}
+};
 
 export const logout = async(req, res) => {
     try{
@@ -166,7 +189,7 @@ export const updateProfile = async(req, res) => {
             fullname: user.fullname,
             email: user.email,
             phoneNumber: user.phoneNumber,
-            role: user.role,
+            workstatus: user.workstatus,
             profile: user.profile
         }
 
