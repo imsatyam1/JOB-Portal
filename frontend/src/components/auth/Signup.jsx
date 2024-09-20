@@ -3,7 +3,7 @@ import Navbar from "../shared/Navbar";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage } from "../ui/avatar";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import defaultProfilePic from "../../assets/124599.jpeg";
 import axios from "axios";
 import { USER_API_END_POINT } from '@/utils/constant'
@@ -11,6 +11,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Button } from "../ui/button";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { setLoading } from "@/redux/authSlice";
 
 function Signup() {
   const [input, setInput] = useState({
@@ -138,6 +139,12 @@ function Signup() {
     }
   };
 
+  useEffect(() => {
+    if(user){
+      navigate("/")
+    }
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     validateForm();
@@ -153,6 +160,7 @@ function Signup() {
       formData.append("resume", input.resume);
       
       try {
+        dispatch(setLoading(true));
         const res = await axios.post(`${USER_API_END_POINT}/register`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true 
@@ -161,48 +169,12 @@ function Signup() {
         
         if (res.data.success) { 
           navigate("/login");
-          toast.success(res.data.message, {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: true,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
-            });
-        } 
-        else {
-          toast.error('Something went wrong', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: true,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
-            });
         }
       } catch (error) {
         console.log(error);
-        toast.error(error.response.data.message || "An error occurred", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "dark",
-          transition: Bounce,
-          });
       }
     } else {
       console.log("Form has errors", errors);
-      toast.error("Please correct the errors before submitting the form"); // Display toast for form errors
     } 
   };  
 

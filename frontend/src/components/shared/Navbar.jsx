@@ -1,55 +1,46 @@
 import React, { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarImage } from "../ui/avatar";
-import { Laptop, LogOut, Search, Settings, ShieldQuestion, Book, Menu } from "lucide-react";
+import { Laptop, ShieldQuestion, Menu, LogOutIcon, SearchIcon } from "lucide-react";
 import { Button } from "../ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch,useSelector } from "react-redux";
+import axios from "axios";
+import { USER_API_END_POINT } from "@/utils/constant";
+import { setUser } from "@/redux/authSlice";
 
-// Reusable component for menu items
-const MenuItem = ({ icon: Icon, text }) => (
-  <div className="flex my-2 hover:underline cursor-pointer hover:text-xl hover:text-blue-600 active:text-[#F83002] text-sm font-bold">
-    <Icon className="mr-2 lg:mr-3" />
-    <p>{text}</p>
-  </div>
-);
+// ... (rest of the code remains the same)
 
-// User dropdown menu
-const UserMenu = () => (
-  <div className="p-4">
-    <div className="flex-cols gap-3 lg:gap-4">
-      <Avatar className="h-14 w-14 lg:h-16 lg:w-16 cursor-pointer flex items-center justify-center">
-        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" className="rounded-full" />
-      </Avatar>
-      <div className="flex-cols mt-2">
-        <h4 className="text-sm font-bold">Satyam Sandilya</h4>
-        <p className="text-xs lg:text-sm text-muted-foreground font-bold">Software Dev.</p>
-        <p className="text-sm lg:text-sm text-[#F83002] cursor-pointer font-bold my-2 lg:my-3 hover:text-lg hover:text-blue-600 active:text-[#F83002]">
-          View Profile
-        </p>
-        <hr className="h-px bg-gray-500 border-0 dark:bg-gray-700" />
-      </div>
-    </div>
-    <MenuItem icon={Laptop} text="Jobs" />
-    <MenuItem icon={Search} text="Find Jobs" />
-    <MenuItem icon={Book} text="Blogs" />
-    <MenuItem icon={Settings} text="Settings" />
-    <MenuItem icon={ShieldQuestion} text="FAQ's" />
-    <MenuItem icon={LogOut} text="Logout" />
-  </div>
-);
 
-// Guest dropdown menu
-const GuestMenu = () => (
+export default function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const {user} = useSelector(store => store.auth); 
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  const logoutHandler = async () => {
+    try{
+      const res = await axios.get(`${USER_API_END_POINT}/logout`,{withCredentials: true});
+      if(res.data.success){
+        dispatch(setUser(null));
+      }
+    }
+    catch(error){
+      console.log(error.response.data.message);
+    }
+  }
+
+  const GuestMenu = () => (
   <div className="p-4">
     <ul className="flex flex-col text-base items-start gap-2 font-bold">
       <li className="mx-3 hover:underline cursor-pointer hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
-        Home
+        <Link to="/">Home</Link>
       </li>
       <li className="mx-3 hover:underline cursor-pointer hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
-        Jobs
+        <Link to="/jobs">Jobs</Link>
       </li>
       <li className="mx-3 hover:underline cursor-pointer hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
-        Browse
+        <Link to="/browse">Browse</Link>
       </li>
     </ul>
     <Link to="/login">
@@ -65,9 +56,31 @@ const GuestMenu = () => (
   </div>
 );
 
-export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = false; // Placeholder user authentication state
+  const UserMenu = () => (
+    <div className="p-4">
+      <div className="flex-cols gap-3 lg:gap-4">
+        <Avatar className="h-14 w-14 lg:h-16 lg:w-16 cursor-pointer flex items-center justify-center">
+          <AvatarImage src={user?.pro} alt="@shadcn" className="rounded-full" />
+        </Avatar>
+        <div className="flex-cols mt-2">
+          <h4 className="text-sm font-bold">Satyam Sandilya</h4>
+          <p className="text-xs lg:text-sm text-muted-foreground font-bold">Software Dev.</p>
+          <p className="text-sm lg:text-sm text-blue-600 cursor-pointer font-bold my-2 lg:my-3 hover:text-lg active:text-[#F83002]">
+            <Link to="/profile">View Profile</Link>
+          </p>
+          <hr className="h-px bg-gray-500 border-0 dark:bg-gray-700" />
+        </div>
+      </div>
+      <ul className="flex-col mt-3">
+        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><Laptop />Jobs</li>
+        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><SearchIcon />Search Job</li>
+        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><ShieldQuestion />FAQ's</li>
+        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><LogOutIcon />Logout</li>
+      </ul>
+    </div>
+  );
+
+
 
   return (
     <div className="top-full right-0 max-w-full bg-white border border-gray-200 shadow-lg rounded-lg z-50">
@@ -92,13 +105,13 @@ export default function Navbar() {
         <div className="hidden lg:flex lg:items-center gap-4 lg:gap-12">
           <ul className="flex items-center text-base lg:text-lg gap-2 lg:gap-7 font-bold">
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
-              Home
+             <Link to="/"> Home</Link>
             </li>
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
-              Jobs
+              <Link to="/jobs">Jobs</Link>
             </li>
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
-              Browse
+              <Link to="browse">Browse</Link>
             </li>
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
               Blogs

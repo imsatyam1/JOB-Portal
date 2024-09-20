@@ -5,11 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { USER_API_END_POINT } from "@/utils/constant";
-import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
-import { setLoading } from "@/redux/authSlice";
+import { setLoading, setUser } from "@/redux/authSlice";
 import { Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Login() {
   const [input, setInput] = useState({
@@ -78,11 +79,14 @@ function Login() {
         });
         console.log(res.data.message);
         if (res.data.success) {
+          dispatch(setUser(res.data.user))
           navigate("/");
           toast(res.data.message);
+          <ToastContainer />
         }
       } catch (error) {
         toast.error(error.response.data.message);
+        <ToastContainer />
       }
       finally {
         dispatch(setLoading(false));
