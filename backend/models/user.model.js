@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    max: [6, 'Password must be  at least 6']
     required: true,
   },
   workstatus: {
