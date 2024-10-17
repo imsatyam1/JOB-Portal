@@ -22,9 +22,13 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-
 const PORT = 8081;
 
+// app.get('/test', (req, res) => {
+//     // Set a test cookie
+//     res.cookie('testCookie', 'ThisIsTest');
+//     res.send('Test cookie has been set.');
+//  });
 // api's
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);

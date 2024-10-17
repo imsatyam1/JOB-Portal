@@ -1,6 +1,5 @@
 import { Job } from "../models/job.model.js";
 
-// admin post krega job
 export const postJob = async (req, res) => {
     try {
         const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body;
@@ -8,17 +7,7 @@ export const postJob = async (req, res) => {
         console.log(userId);
         
 
-        if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
-            console.log(title);
-            console.log(description);
-            console.log(requirements);
-            console.log(salary);
-            console.log(location);
-            console.log(jobType);
-            console.log(experience);
-            console.log(position);
-            console.log(companyId);
-            
+        if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {   
             return res.status(400).json({
                 message: "Something is missing.",
                 success: false

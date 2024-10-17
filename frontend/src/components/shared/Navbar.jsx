@@ -23,6 +23,7 @@ export default function Navbar() {
       const res = await axios.get(`${USER_API_END_POINT}/logout`,{withCredentials: true});
       if(res.data.success){
         dispatch(setUser(null));
+        navigate("/");
       }
     }
     catch(error){
@@ -31,7 +32,7 @@ export default function Navbar() {
   }
 
   const GuestMenu = () => (
-  <div className="p-4">
+  <div className="p-2">
     <ul className="flex flex-col text-base items-start gap-2 font-bold">
       <li className="mx-3 hover:underline cursor-pointer hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
         <Link to="/">Home</Link>
@@ -44,12 +45,12 @@ export default function Navbar() {
       </li>
     </ul>
     <Link to="/login">
-      <Button variant="outline" className="w-full font-bold text-sm mt-2 hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
+      <Button variant="outline" className="w-40 font-bold text-sm mx-1 my-2 hover:text-xl hover:text-[#F83002] active:text-[#00aaee]">
         Login
       </Button>
     </Link>
     <Link to="/signup">
-      <Button className="mx-1 lg:my-4 w-full py-2 bg-blue-600 text-white rounded-md">
+      <Button className="w-40 mx-1 lg:my-4 my-2 bg-blue-600 text-white rounded-md">
         Signup
       </Button>
     </Link>
@@ -57,14 +58,14 @@ export default function Navbar() {
 );
 
   const UserMenu = () => (
-    <div className="p-4">
+    <div className="p-2">
       <div className="flex-cols gap-3 lg:gap-4">
         <Avatar className="h-14 w-14 lg:h-16 lg:w-16 cursor-pointer flex items-center justify-center">
-          <AvatarImage src={user?.pro} alt="@shadcn" className="rounded-full" />
+          <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" className="rounded-full" />
         </Avatar>
         <div className="flex-cols mt-2">
-          <h4 className="text-sm font-bold">Satyam Sandilya</h4>
-          <p className="text-xs lg:text-sm text-muted-foreground font-bold">Software Dev.</p>
+          <h4 className="text-sm font-bold">{user?.fullname}</h4>
+          <p className="text-xs lg:text-sm text-muted-foreground font-bold">{user?.profile?.bio}</p>
           <p className="text-sm lg:text-sm text-blue-600 cursor-pointer font-bold my-2 lg:my-3 hover:text-lg active:text-[#F83002]">
             <Link to="/profile">View Profile</Link>
           </p>
@@ -75,7 +76,7 @@ export default function Navbar() {
         <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><Laptop />Jobs</li>
         <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><SearchIcon />Search Job</li>
         <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><ShieldQuestion />FAQ's</li>
-        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline"><LogOutIcon />Logout</li>
+        <li className="flex gap-3 mb-2 font-bold cursor-pointer hover:underline" onClick={logoutHandler}><LogOutIcon />Logout</li>
       </ul>
     </div>
   );
@@ -83,7 +84,7 @@ export default function Navbar() {
 
 
   return (
-    <div className="top-full right-0 max-w-full bg-white border border-gray-200 shadow-lg rounded-lg z-50">
+    <div className="top-full w-full bg-white border border-gray-200 shadow-lg rounded-lg z-50">
       <div className="flex items-center justify-between mx-auto max-w-[90%] lg:max-w-auto relative">
         <h1 className="text-3xl lg:text-3xl font-bold ml-4 lg:ml-6 my-6">
           Job<span className="text-blue-600">Portal</span>
@@ -102,7 +103,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden lg:flex lg:items-center gap-4 lg:gap-12">
+        <div className="hidden lg:flex lg:items-center gap-4 lg:gap-1">
           <ul className="flex items-center text-base lg:text-lg gap-2 lg:gap-7 font-bold">
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
              <Link to="/"> Home</Link>
@@ -111,7 +112,7 @@ export default function Navbar() {
               <Link to="/jobs">Jobs</Link>
             </li>
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
-              <Link to="browse">Browse</Link>
+              <Link to="/browse">Browse</Link>
             </li>
             <li className="mx-3 hover:underline cursor-pointer hover:text-blue-600 active:text-[#1F51FF]">
               Blogs
@@ -134,7 +135,7 @@ export default function Navbar() {
             <Popover>
               <PopoverTrigger asChild>
                 <Avatar className="cursor-pointer h-8 w-8 lg:h-10 lg:w-10">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" className="rounded-full" />
+                  <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" className="rounded-full" />
                 </Avatar>
               </PopoverTrigger>
               <PopoverContent className="w-64 lg:w-80">

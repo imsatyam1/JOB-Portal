@@ -1,25 +1,41 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "./shared/Navbar";
 import Job from "./Job";
 import Footer from "./shared/Footer";
-
-const arraySearch = [1, 2, 3, 4, 5, 6, 7, 8];
+import useGetAllJobs from "@/hooks/useGetAllJobs";
+import { useDispatch, useSelector } from "react-redux";
+import store from "@/redux/store";
+import { setSearchedQuery } from "@/redux/jobSlice";
 
 function Browse() {
+  useGetAllJobs();
+  const {allJobs} = useSelector(store => store.job);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    return () => {
+      dispatch(setSearchedQuery(""));
+    }
+  },[])
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="max-w-7xl mx-auto mb-5">
-        <h1 className="font-bold text-xl md:text-2xl lg:text-3xl mx-3 my-4 md:my-6 lg:my-8">
-          Search Results ({arraySearch.length})
+      <div className="flex-grow max-w-7xl mx-auto mb-5">
+        <h1 className="font-bold text-xl md:text-2xl lg:text-3xl my-4 md:my-6 lg:my-8">
+          Search Results ({allJobs.length})
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {arraySearch.map((item, index) => (
-            <div key={index}>
-              <Job />
+        {allJobs.length > 0 ?(
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allJobs.map((job) => (
+            <div key={job._id}>
+              <Job key={job?._id} job={job} />
             </div>
           ))}
         </div>
+        ):(
+          <div className="text-xl">
+            <p>No jobs are currently available. Please try again later.</p>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

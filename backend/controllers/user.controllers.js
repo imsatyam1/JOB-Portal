@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js"
 
 export const register = async(req, res) => {
     try
@@ -12,6 +14,15 @@ export const register = async(req, res) => {
                 success: false
             });
         };
+        
+
+        const file = req.file;
+        const fileUri = getDataUri(file);
+        const cloudResponse =  await cloudinary.uploader.upload(fileUri.content);
+
+        console.log(fullname, email, phoneNumber, password, workstatus);
+        console.log(cloudResponse);
+        
 
         const user = await User.findOne({email});
         if(user){
@@ -21,7 +32,6 @@ export const register = async(req, res) => {
             })
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log("Password hashed :", hashedPassword)
         console.log(fullname,email,phoneNumber, password, workstatus)
 
         const newUser = await User.create({
@@ -30,12 +40,13 @@ export const register = async(req, res) => {
             phoneNumber,
             password:hashedPassword,
             workstatus,
-            // profile:{
-            //     profilePhoto: cloudResponse.secure_url,
-            // }
+            profile:{
+                profilePhoto: cloudResponse.secure_url,
+            }
         });
 
-        console.log("User created:", newUser);
+        console.log(newUser);
+        
 
         return res.status(201).json({
             message:"Account created successfully",
@@ -64,23 +75,27 @@ export const login = async (req, res) => {
         }
 
         let user;
-
-        // Check if the provided id is an email or phone number
+        
+        // Email and Mobile Number validation 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
         const phoneRegex = /^[0-9]{10}$/;
 
         if (emailRegex.test(id)) {
             // If id is an email
             user = await User.findOne({ email: id });
+            console.log(user.profile.profilePhoto);
+            
         } else if (phoneRegex.test(id)) {
             // If id is a phone number
             user = await User.findOne({ phoneNumber: id });
+            console.log(user.profile.profilePhoto);
         } else {
             return res.status(400).json({
                 message: "Please provide a valid email or phone number",
                 success: false
             });
         }
+
 
         // If no user is found
         if (!user) {
@@ -104,7 +119,11 @@ export const login = async (req, res) => {
             userId: user._id
         };
 
+        console.log(tokenData);
+
         const token = await jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' });
+
+        console.log(`token = ${token}`)
 
         // Return user data and token in response, set httpOnly cookie
         user = {
@@ -116,15 +135,19 @@ export const login = async (req, res) => {
             profile: user.profile
         };
 
-        return res.status(200)
-            .cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'strict' })
-            .json({
-                message: `Welcome back ${user.fullname}`,
-                user,
-                success: true
-            });
+        res.status(200).cookie("token", token, { 
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+            httpOnly: true, // Ensure it’s not accessible via JavaScript
+            sameSite: 'strict', // Ensure it’s only sent on same-site requests
+            secure: process.env.NODE_ENV === 'production'? true : false // Only send cookie over HTTPS in production
+        })
+        return res.json({
+        message: `Welcome back ${user.fullname}`,
+        user,
+        success: true
+    });
 
-    } catch (error) {
+        } catch (error) {
         console.error(error);
         return res.status(500).json({
             message: "Server error, please try again later",
@@ -148,11 +171,12 @@ export const logout = async(req, res) => {
 export const updateProfile = async(req, res) => {
     try{
         const {fullname, email, phoneNumber, bio, skills} = req.body;
-
-        // const file = req.file;
-
-        // const fileUri = getDataUri(file);
-        // const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        
+        console.log(fullname, email, phoneNumber, bio, skills);
+        
+        const file = req.file;
+        const fileUri = getDataUri(file);
+        const cloudResponse =  await cloudinary.uploader.upload(fileUri.content);
         
         let skillsArray;
         if (skills) {
@@ -175,12 +199,10 @@ export const updateProfile = async(req, res) => {
         if(bio) user.profile.bio = bio
         if(skills) user.profile.skills = skillsArray
 
-        // resume comes leter here
-
-        // if(cloudResponse){
-        //     user.profile.resume = cloudResponse.secure_url
-        //     user.profile.resumeOriginalName = file.originalname
-        // }
+        if(cloudResponse){
+            user.profile.resume = cloudResponse.secure_url
+            user.profile.resumeOriginalName = file.originalname
+        }
 
         await user.save();
 
@@ -201,5 +223,25 @@ export const updateProfile = async(req, res) => {
     }
     catch(error){
         console.log(error);  
+    }
+}
+
+export const dummy = async(req, res) => {
+    try {
+        const {text} = req.body;
+    const userId = req.id;
+    let user = await User.findById(userId);
+
+    if(!user){
+        return res.status(400).json({
+            message: "User not found.",
+            success: false
+        })
+    }
+
+    localStorage.setItem("text", text);
+    console.log(text);
+    } catch (error) {
+        console.log(error);
     }
 }

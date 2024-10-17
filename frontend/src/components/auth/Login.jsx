@@ -9,8 +9,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { setLoading, setUser } from "@/redux/authSlice";
 import { Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 function Login() {
   const [input, setInput] = useState({
@@ -55,6 +53,7 @@ function Login() {
 
     setErrors(tempErrors);
     setIsFormValid(Object.keys(tempErrors).length === 0);
+    console.log(isFormValid);
   };
 
   const handleChange = (e) => {
@@ -65,34 +64,41 @@ function Login() {
     });
   };
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     validateForm();
     if (isFormValid) {
       try {
         dispatch(setLoading(true));
         const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
-          header: {
+          headers: {
             "Content-Type": "application/json"
           },
           withCredentials: true,
         });
-        console.log(res.data.message);
+        console.log(res);
         if (res.data.success) {
-          dispatch(setUser(res.data.user))
+          dispatch(setUser(res.data.user));
+          console.log(res.data.user);
           navigate("/");
-          toast(res.data.message);
-          <ToastContainer />
         }
       } catch (error) {
-        toast.error(error.response.data.message);
-        <ToastContainer />
-      }
-      finally {
+        if (error.response) {
+          console.error(error.response.data.message);
+        } else {
+          console.error('Error:', error.message);
+        }
+      } finally {
         dispatch(setLoading(false));
       }
     }
-  }
+  };  
+
+  useEffect(() => {
+    if (user) {
+      navigate("/")
+    }
+  }, [])
 
   return (
     <div>

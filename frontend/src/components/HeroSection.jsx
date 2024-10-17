@@ -10,10 +10,10 @@ function HeroSection() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     
-    // const searchJobHandler = () => {
-    //     dispatch(setSearchedQuery(query));
-    //     // const navigate("/browse");
-    // }
+    const searchJobHandler = () => {
+        dispatch(setSearchedQuery(query));
+        navigate("/browse");
+    }
   return (
     <div className='text-center'>
         <div className="flex flex-col gap-5 my-10 md:my-20 lg:my-30">
@@ -24,8 +24,10 @@ function HeroSection() {
                 type="text" 
                 placeholder='Find your dream jobs?'
                 className= 'ouline-none border-none w-full'
+                onChange={(e) => setQuery(e.target.value)}
                 />
-                <Button 
+                <Button
+                onClick = {searchJobHandler} 
                 className="rounded-r-full bg-blue-600">
                     <Search className= 'h-5 w-5' />
                 </Button>

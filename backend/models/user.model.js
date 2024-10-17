@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     unique: true
   },
   phoneNumber: {
-    type: String, // Changed to String to handle phone numbers better
+    type: String,
     required: true
   },
   password: {
@@ -31,10 +31,10 @@ const userSchema = new mongoose.Schema({
   profile: {
     bio: { type: String },
     skills: [{ type: String }],
-    resumeUrl: { type: String }, // Store URL of the resume
-    resumeOriginalName: { type: String }, // Optional: store the original file name
+    resume: { type: String }, 
+    resumeOriginalName: { type: String },
     company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
-    profilePhotoUrl: { // Store URL of the profile photo
+    profilePhoto: { 
       type: String,
       default: ""
     }
